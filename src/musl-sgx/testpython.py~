@@ -1,0 +1,18 @@
+import os
+import subprocess
+import commands
+import time
+
+filenames = next(os.walk("jssample"))[2]
+
+filenames.sort()
+f = open('result.log', 'w')
+for file in filenames:
+	command = "./app jssample/" + file
+	start_time = time.time()
+	(status, output) = commands.getstatusoutput(command)
+	end_time = time.time()
+	execution_time = end_time - start_time
+	truc_time = float("{0:.3f}".format(execution_time))
+	f.write(file+ "\t" + str(truc_time)+"\n")
+f.close()
