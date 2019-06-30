@@ -30,50 +30,11 @@
  */
 
 
-#include <stdarg.h>
-#include <stdio.h>      /* vsnprintf */
+/* User defined types */
 
-#include "Enclave.h"
-#include "Enclave_t.h"  /* print_string */
 
-#include <string.h>
-#include <time.h>
+#define LOOPS_PER_THREAD 500
 
-void test_printf(){
-	printf("TEST\n");
-}
+typedef void *buffer_t;
+typedef int array_t[10];
 
-void test_scanf(){
-	char s[17];
-	printf("Enter a string: \n");
-	scanf("%16s", s);
-	printf("You entered \"%s\".\n",s);
-}
-
-void test_fwrite(){
-	void* fp;
-	char s[] = "Output text";
-	fp = fopen("testfile.txt","w");
-	fwrite(s, 1, strlen(s), fp);
-	fclose(fp);
-}
-
-void test_fread(){
-	void* fp;
-	int amountRead = 0;
-	char s[16];
-	fp = fopen("testfile.txt","r");
-	amountRead = fread(s, 1, 16, fp);
-	printf("File contained: %s (read %d chars)\n", s, amountRead);
-	fclose(fp);
-}
-
-void test_time(){
-	long t = time(NULL);
-	printf("Time: %ld\n", t);
-}
-
-void run_squirrel(int argc, char *argv[]){
-	printf("I am about to run a lua program\n");
-	main(argc, argv);
-}

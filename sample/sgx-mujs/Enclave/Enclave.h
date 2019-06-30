@@ -30,50 +30,37 @@
  */
 
 
-#include <stdarg.h>
-#include <stdio.h>      /* vsnprintf */
+#ifndef _ENCLAVE_H_
+#define _ENCLAVE_H_
 
-#include "Enclave.h"
-#include "Enclave_t.h"  /* print_string */
+#include <stdlib.h>
+#include <assert.h>
 
-#include <string.h>
-#include <time.h>
+#if defined(__cplusplus)
+extern "C" {
+#endif
+#include <stdio.h>
 
-void test_printf(){
-	printf("TEST\n");
+
+void printf(const char *fmt, ...);
+int scanf(const char *fmt, ...);
+void* fopen(const char *path, const char *mode); 
+size_t fwrite(const void *ptr, size_t size, size_t nitems, void *stream);
+size_t fread(const void *ptr, size_t size, size_t nitems, void *stream);
+void* fclose(void *stream); 
+long time(long* result);
+
+int main(int argc, char** argv);
+int server_main();
+int dostring(const char* c);
+/*
+void* luaL_newstate();
+void luaL_dostring(lua_State* s,char* c);
+int luaL_checkinteger(lua_State* s, int i);
+*/
+
+#if defined(__cplusplus)
 }
+#endif
 
-void test_scanf(){
-	char s[17];
-	printf("Enter a string: \n");
-	scanf("%16s", s);
-	printf("You entered \"%s\".\n",s);
-}
-
-void test_fwrite(){
-	void* fp;
-	char s[] = "Output text";
-	fp = fopen("testfile.txt","w");
-	fwrite(s, 1, strlen(s), fp);
-	fclose(fp);
-}
-
-void test_fread(){
-	void* fp;
-	int amountRead = 0;
-	char s[16];
-	fp = fopen("testfile.txt","r");
-	amountRead = fread(s, 1, 16, fp);
-	printf("File contained: %s (read %d chars)\n", s, amountRead);
-	fclose(fp);
-}
-
-void test_time(){
-	long t = time(NULL);
-	printf("Time: %ld\n", t);
-}
-
-void run_squirrel(int argc, char *argv[]){
-	printf("I am about to run a lua program\n");
-	main(argc, argv);
-}
+#endif /* !_ENCLAVE_H_ */

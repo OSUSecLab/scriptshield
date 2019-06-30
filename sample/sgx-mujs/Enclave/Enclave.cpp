@@ -73,7 +73,7 @@ void test_time(){
 	printf("Time: %ld\n", t);
 }
 
-void run_squirrel(int argc, char *argv[]){
-	printf("I am about to run a lua program\n");
+void run_mujs(int argc, char *argv[]){
+	printf("I am about to run a mujs program\n");
 	main(argc, argv);
 }

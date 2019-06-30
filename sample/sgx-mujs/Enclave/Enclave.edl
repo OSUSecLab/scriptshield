@@ -29,51 +29,40 @@
  *
  */
 
+/* Enclave.edl - Top EDL file. */
 
-#include <stdarg.h>
-#include <stdio.h>      /* vsnprintf */
+enclave {
+    
+    include "user_types.h" /* buffer_t */
+ 
 
-#include "Enclave.h"
-#include "Enclave_t.h"  /* print_string */
+    trusted {
+        public void test_printf();
+        public void test_scanf();
+	public void test_fwrite();
+	public void test_fread();
+	public void test_time();
+        public void run_mujs(int argc, [user_check] char** argv);
 
-#include <string.h>
-#include <time.h>
+    };
 
-void test_printf(){
-	printf("TEST\n");
-}
-
-void test_scanf(){
-	char s[17];
-	printf("Enter a string: \n");
-	scanf("%16s", s);
-	printf("You entered \"%s\".\n",s);
-}
-
-void test_fwrite(){
-	void* fp;
-	char s[] = "Output text";
-	fp = fopen("testfile.txt","w");
-	fwrite(s, 1, strlen(s), fp);
-	fclose(fp);
-}
-
-void test_fread(){
-	void* fp;
-	int amountRead = 0;
-	char s[16];
-	fp = fopen("testfile.txt","r");
-	amountRead = fread(s, 1, 16, fp);
-	printf("File contained: %s (read %d chars)\n", s, amountRead);
-	fclose(fp);
-}
-
-void test_time(){
-	long t = time(NULL);
-	printf("Time: %ld\n", t);
-}
-
-void run_squirrel(int argc, char *argv[]){
-	printf("I am about to run a lua program\n");
-	main(argc, argv);
-}
+    untrusted {
+	void ocall_print_long(long l);
+	void ocall_print_time(long n, long l);
+	void ocall_print_timeend(long n, long l);
+	void ocall_print_timeres(long n, long l, long s);
+	void ocall_print_string([in,string]const char* str);
+	long ocall_writev(long fd, long bufs, long len);
+	long ocall_write(long fd, long bufs, long len);
+	long ocall_syscall0(long n);
+	long ocall_syscall1(long n, long a1);
+	long ocall_syscall2(long n, long a1, long a2);
+	long ocall_syscall3(long n, long a1, long a2, long a3);
+	long ocall_syscall4(long n, long a1, long a2, long a3, long a4);
+	long ocall_syscall5(long n, long a1, long a2, long a3, long a4, long a5);
+	long ocall_syscall6(long n, long a1, long a2, long a3, long a4, long a5, long a6);
+	void* ocall_malloc(int len);
+	void ocall_free([in, string]unsigned char *str);
+    
+        };
+};

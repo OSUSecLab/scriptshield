@@ -30,50 +30,45 @@
  */
 
 
+#ifndef _APP_H_
+#define _APP_H_
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>      /* vsnprintf */
 
-#include "Enclave.h"
-#include "Enclave_t.h"  /* print_string */
+#include "sgx_error.h"       /* sgx_status_t */
+#include "sgx_eid.h"     /* sgx_enclave_id_t */
 
-#include <string.h>
-#include <time.h>
+#ifndef TRUE
+# define TRUE 1
+#endif
 
-void test_printf(){
-	printf("TEST\n");
+#ifndef FALSE
+# define FALSE 0
+#endif
+
+# define TOKEN_FILENAME   "enclave.token"
+# define ENCLAVE_FILENAME "enclave.signed.so"
+
+extern sgx_enclave_id_t global_eid;    /* global enclave id */
+typedef int (*func_ptr)(void);
+#if defined(__cplusplus)
+extern "C" {
+#endif
+typedef int (*func_ptr)(void);
+void edger8r_array_attributes(void);
+void edger8r_type_attributes(void);
+void edger8r_pointer_attributes(void);
+void edger8r_function_attributes(void);
+
+void ecall_libc_functions(void);
+void ecall_libcxx_functions(void);
+void ecall_thread_functions(void);
+
+#if defined(__cplusplus)
 }
+#endif
 
-void test_scanf(){
-	char s[17];
-	printf("Enter a string: \n");
-	scanf("%16s", s);
-	printf("You entered \"%s\".\n",s);
-}
-
-void test_fwrite(){
-	void* fp;
-	char s[] = "Output text";
-	fp = fopen("testfile.txt","w");
-	fwrite(s, 1, strlen(s), fp);
-	fclose(fp);
-}
-
-void test_fread(){
-	void* fp;
-	int amountRead = 0;
-	char s[16];
-	fp = fopen("testfile.txt","r");
-	amountRead = fread(s, 1, 16, fp);
-	printf("File contained: %s (read %d chars)\n", s, amountRead);
-	fclose(fp);
-}
-
-void test_time(){
-	long t = time(NULL);
-	printf("Time: %ld\n", t);
-}
-
-void run_squirrel(int argc, char *argv[]){
-	printf("I am about to run a lua program\n");
-	main(argc, argv);
-}
+#endif /* !_APP_H_ */
