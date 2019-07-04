@@ -28,8 +28,7 @@ Please refer to the Intel SGX for Linux project for the cutting edge version.
 
 ## Compiling
 - Compiling musl libc. musl libc is under src/musl-sgx. Following the instruction to compile musl libc first before compiling sample. 
-- Compiling the dependencies for each interpreter.
-- Compiling SGX program. 
+- In each Sample, just run make command which will compile the dependencies for each interpreter and sgx program.
+- For each interpreter, the dependent libs are listed under libs. 
 ## Running
-
-## 
+- Simply run the program with input ad the script you are going to run.
