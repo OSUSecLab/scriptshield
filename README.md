@@ -27,7 +27,7 @@ Please refer to the Intel SGX for Linux project for the cutting edge version.
 - Install dependencies for Instal SGX PSW and SGX SDK first. Following instructions are for Ubuntu 16.04, you can find detailed guilde from the [Intel SGX Installation Guide](https://download.01.org/intel-sgx/linux-2.4/docs/Intel_SGX_Installation_Guide_Linux_2.4_Open_Source.pdf)
 
 ## Compiling
-- Compiling musl libc. 
+- Compiling musl libc. musl libc is under src/musl-sgx. Following the instruction to compile musl libc first before compiling sample. 
 - Compiling the dependencies for each interpreter.
 - Compiling SGX program. 
 ## Running
