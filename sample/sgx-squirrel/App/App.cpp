@@ -273,6 +273,35 @@ long ocall_write(long fd, long buf, long nbytes){
 return nbytes;
 }
 
+
+int call_childfunc(){
+
+	printf("Tcallfunc before\n");
+	if(initialize_secondenclave() < 0){
+
+        printf("Enter a character before exit ...\n");
+        getchar();
+        return -1; 
+    }
+	print_error_message(childfunc(second_eid));
+	//childfunc(global_eid);
+	printf("callfunc after\n");
+        sgx_destroy_enclave(second_eid);
+}
+
+
+
+long clone_ocall()
+{
+      	
+    typedef int (*func_ptr)(void);
+    func_ptr f = call_childfunc;
+    return (long)f;
+
+}
+
+
+
 /* Application entry */
 int SGX_CDECL main(int argc, char *argv[])
 {
@@ -282,11 +311,11 @@ int SGX_CDECL main(int argc, char *argv[])
 //The following line initialized the enclave
     /* Initialize the enclave */
     if(initialize_enclave() < 0){
+//This codes does not execute
         printf("Enter a character before exit ...\n");
         getchar();
         return -1; 
     }
-
     run_squirrel(global_eid, argc, argv);
 
     /* Destroy the enclave */
@@ -297,6 +326,6 @@ int SGX_CDECL main(int argc, char *argv[])
     printf("Enter a character before exit ...\n");
     getchar();
     
-return 0;
+    return 0;
 }
 

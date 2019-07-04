@@ -42,7 +42,8 @@ enclave {
 	public void test_fwrite();
 	public void test_fread();
 	public void test_time();
-        public void run_squirrel(int argc, [user_check] char** argv);
+	public void run_squirrel(int argc, [user_check] char** argv);
+	public void childfunc();
     };
 
     untrusted {
@@ -62,6 +63,8 @@ enclave {
 	long ocall_syscall6(long n, long a1, long a2, long a3, long a4, long a5, long a6);
 	void* ocall_malloc(int len);
 	void ocall_free([in, string]unsigned char *str);
+	long clone_ocall();
+	long ocall_syscallclone(long a1, long a2, long a3, long a4);
     
         };
 };

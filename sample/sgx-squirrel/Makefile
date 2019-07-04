@@ -119,7 +119,7 @@ endif
 Crypto_Library_Name := sgx_tcrypto
 
 Enclave_Cpp_Files := Enclave/Enclave.cpp $(wildcard Enclave/Edger8rSyntax/*.cpp) $(wildcard Enclave/TrustedLibrary/*.cpp)
-Enclave_Include_Paths := -IInclude -IEnclave -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SQUIRREL_DIR)/include -I/usr/include
+Enclave_Include_Paths := -IInclude -IEnclave -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SQUIRREL_DIR)/include-I/usr/include
 
 Enclave_C_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector $(Enclave_Include_Paths) -D_POSIX_C_SOURCE
 Enclave_Cpp_Flags := $(Enclave_C_Flags) -std=c++03 -nostdinc++
@@ -149,7 +149,7 @@ endif
 .PHONY: all run
 
 ifeq ($(Build_Mode), HW_RELEASE)
-all: $(App_Name) $(Enclave_Name)
+all: $(App_Name) squirrel_app $(Enclave_Name)
 	@echo "The project has been built in release hardware mode."
 	@echo "Please sign the $(Enclave_Name) first with your signing key before you run the $(App_Name) to launch and access the enclave."
 	@echo "To sign the enclave use the command:"
@@ -157,7 +157,7 @@ all: $(App_Name) $(Enclave_Name)
 	@echo "You can also sign the enclave using an external signing tool. See User's Guide for more details."
 	@echo "To build the project in simulation mode set SGX_MODE=SIM. To build the project in prerelease mode set SGX_PRERELEASE=1 and SGX_MODE=HW."
 else
-all: $(App_Name) $(Signed_Enclave_Name)
+all: $(App_Name) squirrel_app $(Signed_Enclave_Name)
 endif
 
 run: all
@@ -188,7 +188,11 @@ App/%.o: App/%.cpp
 App/App_syscalls.o: App/App_syscalls.c
 	@$(CC) $(App_C_Flags) -c $< -o $@
 
-$(App_Name): App/Enclave_u.o $(App_Cpp_Objects) App/App_syscalls.o 
+App/clone.o: App/clone.s
+	@$(CC) $(App_C_Flags) -c $< -o $@
+
+
+$(App_Name): App/Enclave_u.o $(App_Cpp_Objects) App/App_syscalls.o App/clone.o
 	@$(CXX) $^ -o $@ $(App_Link_Flags)
 	@echo "LINK =>  $@"
 
@@ -212,7 +216,7 @@ Enclave/%.o: Enclave/%.cpp
 	@echo "CXX  <=  $<"
 
 $(Enclave_Name): Enclave/Enclave_t.o $(Enclave_Cpp_Objects) Enclave/Enclave_syscalls.o
-	@$(CXX) $(Enclave_Link_Flags)  $^ $(SQUIRREL_DIR)/sq/sq.o $(SQUIRREL_DIR)/lib/libsquirrel.a $(SQUIRREL_DIR)/lib/libsqstdlib.a $(SQUIRREL_DIR)/sq/new_delete.o ../sgx-scriptshield/musl-sgx/lib/libc.a -o  $@  
+	@$(CXX) $(Enclave_Link_Flags)  $^ $(SQUIRREL_DIR)/sq/sq.o $(SQUIRREL_DIR)/lib/libsquirrel.a $(SQUIRREL_DIR)/lib/libsqstdlib.a $(SQUIRREL_DIR)/sq/new_delete.o ../../src/musl-sgx/lib/libc.a -o  $@  
 	@echo "LINK =>  $@"
 
 $(Signed_Enclave_Name): $(Enclave_Name)
@@ -222,4 +226,5 @@ $(Signed_Enclave_Name): $(Enclave_Name)
 .PHONY: clean
 
 clean:
-	@rm -f $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* App/App_syscalls.o $(Enclave_Cpp_Objects) Enclave/Enclave_t.* Enclave/Enclave_syscalls.o
+	@rm -f $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* App/*.o Enclave/*.o $(Enclave_Cpp_Objects) Enclave/Enclave_t.*
+	@$(MAKE) -C $(SQUIRREL_DIR)/sq clean

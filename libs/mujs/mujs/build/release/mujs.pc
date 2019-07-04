@@ -1,0 +1,7 @@
+Name: mujs
+Description: MuJS embeddable Javascript interpreter
+Version: 1.0.0-3-g0a3fc12
+URL: http://dev.mujs.com/
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lmujs
+Libs.private: -lm

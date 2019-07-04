@@ -74,6 +74,6 @@ void test_time(){
 }
 
 void run_squirrel(int argc, char *argv[]){
-	printf("I am about to run a lua program\n");
+	printf("I am about to run a squirrel program\n");
 	main(argc, argv);
 }

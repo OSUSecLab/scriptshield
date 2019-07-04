@@ -45,6 +45,9 @@ could eventually cause problems.
 #define SOCKETPAIR 53
 #define SETSOCKOPT 54
 #define GETSOCKOPT 55
+#define CLONE 56
+#define FORK 57
+#define VFORK 58
 #define EXECVE 59
 #define WAIT4 61
 #define FCNTL 72
@@ -170,6 +173,17 @@ struct enclave_pollfd {
                short revents;    /* returned events */
            };
 
+//struct msghdr {
+//    void         *msg_name;       /* optional address */
+//    socklen_t     msg_namelen;    /* size of address */
+//    struct iovec *msg_iov;        /* scatter/gather array */
+//    size_t        msg_iovlen;     /* # elements in msg_iov */
+//    void         *msg_control;    /* ancillary data, see below */
+//    size_t        msg_controllen; /* ancillary data buffer len */
+//    int           msg_flags;      /* flags on received message */
+//};
+
+
 
 struct stat
   {
@@ -249,6 +263,7 @@ struct rusage {
 
 
 unsigned long enclave_open(long pathname, long flags, long mode){
+	//ocall_print_long(mode);
 	unsigned long ret = -1;
 	unsigned long len = strnlen((const char*) pathname, PATH_MAX);
 	void* buf = sgx_ocalloc(len+1);
@@ -259,6 +274,7 @@ unsigned long enclave_open(long pathname, long flags, long mode){
 }
 
 unsigned long enclave_open2(long pathname, long flags){
+	//ocall_print_long(mode);
 	unsigned long ret = -1;
 	unsigned long len = strnlen((const char*) pathname, PATH_MAX);
 	void* buf = sgx_ocalloc(len+1);
@@ -293,12 +309,15 @@ unsigned long enclave_readv(long fd, long iov, long iovcnt){
 		memcpy(buf+iovec_offs, &iovs[i], sizeof(struct enclave_iovec));
 		((struct enclave_iovec*) (buf+iovec_offs))->iov_base = (buf + offset);//Set new iovec to point to address of new string buffer
 		iovec_offs += sizeof(struct enclave_iovec);
+		//memcpy(buf+offset, iovs[i].iov_base, iovs[i].iov_len);
 		offset += iovs[i].iov_len;
         }
 	ocall_syscall3(&ret, READV, fd, (long)buf, iovcnt);
 	offset = iovcnt*sizeof(struct enclave_iovec);
 	iovec_offs = 0;
 	for( i = 0; i < iovcnt; i++ ){
+		//memcpy(&iovs[i], buf+iovec_offs, sizeof(struct enclave_iovec));
+		//((struct enclave_iovec*) (buf+iovec_offs))->iov_base = (buf + offset);//Set new iovec to point to address of new string buffer
 		iovec_offs += sizeof(struct enclave_iovec);
 		memcpy(iovs[i].iov_base, buf+offset, iovs[i].iov_len);//Copy back in to buffer
 		offset += iovs[i].iov_len;
@@ -329,7 +348,15 @@ unsigned long enclave_writev(long fd, long iov, long iovcnt){
 		iovec_offs += sizeof(struct enclave_iovec);
 		memcpy(buf+offset, iovs[i].iov_base, iovs[i].iov_len);
 		offset += iovs[i].iov_len;
+                /*sbuf = (unsigned long*)(buf+offset);
+                *sbuf = iovs[i].iov_len;
+                offset+=sizeof(unsigned long);
+                for( j = 0; j < iovs[i].iov_len; j++ ){
+                        buf[offset] = *((unsigned char*)iovs[i].iov_base + offset);//Perhaps this doesn't directly contain the data?  Something is wrong?
+                        offset++;
+                }*/
         }
+        //ocall_writev(&ret, fd, (long)buf, iovcnt);
 	ocall_syscall3(&ret, WRITEV, fd, (long)buf, iovcnt);
         sgx_ocfree();
         return ret;
@@ -340,6 +367,7 @@ unsigned long enclave_clock_gettime(long clk_id, long tp){
 	unsigned long ret = -1;
 	buf = (unsigned char*)sgx_ocalloc(sizeof(struct enclave_timespec));
 	ocall_syscall2(&ret, CLOCK_GETTIME, clk_id, (long)buf);
+	//memcpy((long*)tp, buf, sizeof(struct enclave_timespec));
 	memcpy((struct enclave_timespec *)tp, buf, sizeof(struct enclave_timespec));
 	sgx_ocfree();
 	return ret;
@@ -382,7 +410,9 @@ unsigned long enclave_setsockopt(long sockfd, long level, long optname, long opt
 	memcpy(buf, (void*)optval, optlen);
 	ocall_syscall5(&ret, SETSOCKOPT, sockfd, level, optname, (long)buf, optlen);
 	sgx_ocfree();
+	//memcpy(buffer, buf, optlen);
 	return ret;
+	//return *buffer;
 }
 
 unsigned long enclave_getsockopt(long sockfd, long level, long optname, long optval, long optlen){
@@ -520,6 +550,13 @@ unsigned long enclave_accept(long sockfd, long addr, long addrlen){
 	
 	buffer = (unsigned char*)sgx_ocalloc(sizeof(struct enclave_sockaddr) + sizeof(int));
 	memset(buffer, 0, sizeof(struct enclave_sockaddr));	
+	//Perhaps addrlen is an int*
+	/*if((struct enclave_sockaddr*)addr != NULL){
+        	memcpy(buffer, addr, sizeof(struct enclave_sockaddr));
+	}
+	else{
+		buffer = NULL;
+	}*/
 	*(buffer+len) = len;
 	ocall_syscall3(&ret, ACCEPT, sockfd, (long)buffer, (long)(buffer+len) );
 	memcpy(addr, buffer, len);
@@ -686,8 +723,6 @@ unsigned long enclave_stat(long pathname, long statbuf){
 
 
 unsigned long enclave_fstat(long fd, long statbuf){
-	
-	
 	unsigned long ret = -1;
 	unsigned char* buffer;
 	
@@ -728,6 +763,37 @@ unsigned long enclave_pipe2(long pipefd, long flags){
 
 }
 
+unsigned long enclave_clone(long fn, long child_stack, long flags, long arg){
+	unsigned long ret = -1;
+	unsigned char* buffer;
+	unsigned char* arg_clone;
+	childfunc_addr = (int*) fn;
+	
+	arg_global = (struct args*) arg;
+        int (*function_pointer)() = NULL;
+        clone_ocall((long)& function_pointer);
+	ocall_print_long((long)function_pointer);
+	ocall_malloc(&buffer, 20000);
+	ocall_print_string("before sys call\n");
+        ret = 23008;
+	ocall_print_string("after sys call\n");
+	return ret;
+
+}
+
+unsigned long enclave_fork(){
+	unsigned long ret = -1;
+	ocall_syscall0(&ret, FORK);
+	return ret;
+
+}
+
+unsigned long enclave_vfork(){
+	unsigned long ret = -1;
+	ocall_syscall0(&ret, VFORK);
+	return ret;
+}
+
 unsigned long enclave_dup2(long oldfd, long newfd){
 	unsigned long ret = -1;
 	ocall_syscall2(&ret, DUP2, oldfd, newfd);
@@ -747,6 +813,16 @@ unsigned long enclave_execve(long filename, long argv, long envp){
 	buffer = (unsigned char *)sgx_ocalloc(c+128);
 	ocall_syscall3(&ret, EXECVE, (long) buffer, (long)(buffer+c), NULL);
 	return ret;
+}
+
+void childfunc(){
+	
+	ocall_print_string("before childfunc\n");
+        ocall_print_long((long)childfunc_addr);
+        ocall_print_long((long)arg_global);
+	
+	ocall_print_string("after childfunc\n");
+	
 }
 
 unsigned long enclave_wait4(long pid, long status, long options, long rusage){

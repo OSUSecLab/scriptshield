@@ -40,6 +40,8 @@ SGX_DEBUG = 1
 
 LUA_DIR = lua-5.3.3
 LUASOCKET_DIR = luasocket-3.0-rc1
+LUAFILE_DIR = luafilesystem 
+RINGS_DIR = rings 
 
 ifeq ($(shell getconf LONG_BIT), 32)
 	SGX_ARCH := x86
@@ -150,7 +152,7 @@ endif
 .PHONY: all run
 
 ifeq ($(Build_Mode), HW_RELEASE)
-all: $(App_Name) lsocket lua $(Enclave_Name)
+all: $(App_Name) lsocket lua Rings luafile $(Enclave_Name)
 	@echo "The project has been built in release hardware mode."
 	@echo "Please sign the $(Enclave_Name) first with your signing key before you run the $(App_Name) to launch and access the enclave."
 	@echo "To sign the enclave use the command:"
@@ -158,7 +160,7 @@ all: $(App_Name) lsocket lua $(Enclave_Name)
 	@echo "You can also sign the enclave using an external signing tool. See User's Guide for more details."
 	@echo "To build the project in simulation mode set SGX_MODE=SIM. To build the project in prerelease mode set SGX_PRERELEASE=1 and SGX_MODE=HW."
 else
-all: $(App_Name) lsocket lua $(Signed_Enclave_Name)
+all: $(App_Name) lsocket lua Rings luafile $(Signed_Enclave_Name)
 endif
 
 run: all
@@ -177,6 +179,12 @@ lsocket:
 	echo "hello"
 	@$(MAKE) -C $(LUASOCKET_DIR)/ linux
 
+Rings:
+	@$(MAKE) -C $(RINGS_DIR)
+
+luafile:
+	@$(MAKE) -C $(LUAFILE_DIR)
+
 ######## App Objects ########
 
 App/Enclave_u.c: $(SGX_EDGER8R) Enclave/Enclave.edl
@@ -194,7 +202,11 @@ App/%.o: App/%.cpp
 App/App_syscalls.o: App/App_syscalls.c
 	@$(CC) $(App_C_Flags) -c $< -o $@
 
-$(App_Name): App/Enclave_u.o $(App_Cpp_Objects) App/App_syscalls.o
+App/clone.o: App/clone.s
+	@$(CC) $(App_C_Flags) -c $< -o $@
+
+
+$(App_Name): App/Enclave_u.o $(App_Cpp_Objects) App/App_syscalls.o App/clone.o
 	@$(CXX) $^ -o $@ $(App_Link_Flags)
 	@echo "LINK =>  $@"
 
@@ -218,7 +230,7 @@ Enclave/%.o: Enclave/%.cpp
 	@echo "CXX  <=  $<"
 
 $(Enclave_Name): Enclave/Enclave_t.o $(Enclave_Cpp_Objects) Enclave/Enclave_syscalls.o
-	@$(CXX) $(Enclave_Link_Flags)  $^ $(LUASOCKET_DIR)/src/*.o $(LUA_DIR)/src/lua.o ./luafilesystem/src/lfs.o ./rings/src/rings.o $(LUA_DIR)/src/liblua.a ../../musl-sgx/lib/libc.a -o  $@  
+	@$(CXX) $(Enclave_Link_Flags)  $^ $(LUASOCKET_DIR)/src/*.o $(LUA_DIR)/src/lua.o ./luafilesystem/src/lfs.o ./rings/src/rings.o $(LUA_DIR)/src/liblua.a ../../src/musl-sgx/lib/libc.a -o  $@  
 	@echo "LINK =>  $@"
 
 $(Signed_Enclave_Name): $(Enclave_Name)
@@ -228,6 +240,8 @@ $(Signed_Enclave_Name): $(Enclave_Name)
 .PHONY: clean
 
 clean:
-	@rm -f $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* App/App_syscalls.o $(Enclave_Cpp_Objects) Enclave/Enclave_syscalls.o Enclave/Enclave_t.*
+	@rm -f $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* App/*.o Enclave/*.o $(Enclave_Cpp_Objects) Enclave/Enclave_t.*
 	@$(MAKE) -C $(LUA_DIR) clean
 	@$(MAKE) -C $(LUASOCKET_DIR) clean
+	@$(MAKE) -C $(LUAFILE_DIR) clean
+	@$(MAKE) -C $(RINGS_DIR) clean

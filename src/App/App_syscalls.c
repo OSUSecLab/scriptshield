@@ -61,6 +61,9 @@ unsigned long ocall_syscall2(long n, long a1, long a2)
 	clock_gettime(CLOCK_REALTIME, &tsend);
 		timespec_diff(&ts, &tsend, &tres);
 		printf("native The enclave tried to perform syscall %ld: %d seconds %d nano seconds \n", n, tres.tv_sec, tres.tv_nsec);
+	//printf("The enclave tried to perform syscall %ld: %ld, %ld\n", n, a1, a2);
+	//printf("Syscall result: %ld\n", ret);
+	//printf("Errno value: %s\n", strerror(errno));
 	return ret;
 }
 
@@ -71,16 +74,24 @@ unsigned long ocall_syscall3(long n, long a1, long a2, long a3)
 	struct timespec tsend;
 	struct timespec tres;
 
-        clock_gettime(CLOCK_REALTIME, &ts);
+	//if(n==19|| n ==20 || n==41 || n == 42 || n==43 || n== 49 || n==23 || n ==55 || n == 72){
+		clock_gettime(CLOCK_REALTIME, &ts);
  
+       // }
 	
 	__asm__ __volatile__ ("syscall" : "=a"(ret) : "a"(n), "D"(a1), "S"(a2),
                                                   "d"(a3) : "rcx", "r11", "memory");
 
-	clock_gettime(CLOCK_REALTIME, &tsend);
-	timespec_diff(&ts, &tsend, &tres);
-	printf("native The enclave tried to perform syscall %ld: %d seconds %d nano seconds \n", n, tres.tv_sec, tres.tv_nsec);
+	//if(n==19|| n ==20 || n==41 || n == 42 || n==43 || n== 49 || n==23 || n ==55 || n == 72){
+		clock_gettime(CLOCK_REALTIME, &tsend);
+		timespec_diff(&ts, &tsend, &tres);
+		printf("native The enclave tried to perform syscall %ld: %d seconds %d nano seconds \n", n, tres.tv_sec, tres.tv_nsec);
  
+      //  }
+	
+	//printf("The enclave tried to perform syscall %ld: %ld, %ld, %ld\n", n, a1, a2, a3);
+	//printf("Syscall result: %ld\n", ret);
+	//printf("Errno value: %s\n", strerror(errno));
 	return ret;
 }
 
@@ -93,6 +104,20 @@ unsigned long ocall_syscall4(long n, long a1, long a2, long a3, long a4)
                                                   "d"(a3), "r"(r10) : "rcx", "r11", "memory");
 	//printf("Syscall result: %ld\n", ret);
 	//printf("Errno value: %s\n", strerror(errno));
+	return ret;
+}
+
+extern long __clone(long a1, long a2, long a3, long a4);
+unsigned long ocall_syscallclone(long a1, long a2, long a3, long a4)
+{
+	unsigned long ret;
+	//printf("The enclave tried to perform syscall %ld: %ld, %ld, %ld, %ld\n", n, a1, a2, a3, a4);
+	/*register long r10 __asm__("r10") = a4;
+	__asm__ __volatile__ ("syscall" : "=a"(ret) : "a"(n), "D"(a1), "S"(a2),
+                                                  "d"(a3), "r"(r10) : "rcx", "r11", "memory");*/
+	ret = __clone(a1, a2, a3, a4);
+	printf("Syscall result: %ld\n", ret);
+	printf("Errno value: %s\n", strerror(errno));
 	return ret;
 }
 
